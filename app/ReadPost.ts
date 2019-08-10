@@ -1,11 +1,16 @@
+import { UserInstaDB } from "./DB/UserInstaDB";
+
 export class ReadPost {
 
     protected iReadThisPosts: string[] = [];
 
     protected page: any;
 
-    constructor(page: any) {
+    protected userInstaDB: UserInstaDB;
+
+    constructor(page: any, userInstaDB: UserInstaDB) {
         this.page = page;
+        this.userInstaDB = userInstaDB;
     }
 
 
@@ -56,7 +61,19 @@ export class ReadPost {
 
         /* ищем аватарку */
         let avatar = await this.page.$('div[role="dialog"] article img');
-        console.log('alt = ', await this.getAttr(avatar, 'alt'));
+        let alt = await this.getAttr(avatar, 'alt');
+        console.log('alt = ', alt);
+
+        try {
+            let user = {
+                url: alt.split(' ')[2]
+            }
+
+            await this.userInstaDB.add(user);
+        } catch (e) {
+            console.log(e);
+        }
+
         await this.page.waitFor(1000);
 
         /* закрываем модалку */
