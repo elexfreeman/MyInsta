@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 
 import { config } from "./config";
+import { ReadPost } from "./ReadPost";
 
 function wait(t: number) {
     return new Promise((resolve, reject) => {
@@ -8,55 +9,6 @@ function wait(t: number) {
             resolve(true);
         }, t)
     })
-}
-
-/**
- * Выдает атрибут элемента getAttribure() 
- * @param {*} element 
- * @param {String} attr 
- */
-async function getAttr(element: any, attr: any) {
-    let resp;
-    try {
-        let Handler = await element.getProperty(attr);
-        resp = await Handler.jsonValue();
-    } catch (e) {
-
-    }
-    return resp;
-}
-
-async function readPosts(page: any) {
-    let aPost = await page.$$('article> :nth-child(3)>div>div>div a');
-
-    for (let i = 0; i < aPost.length; i++) {
-        console.log(await getAttr(aPost[i], 'href'));
-        await readPostModal(page, aPost[i]);
-        console.log();
-    }
-    return aPost.length;
-}
-
-/**
- * Клик по модалке поста
- * @param {*} page 
- * @param {*} post 
- */
-async function readPostModal(page: any, post: any) {
-    /* кликаем по посту */
-    await post.click();
-    await page.waitFor(1000);
-
-    /* ищем аватарку */
-    let avatar = await page.$('div[role="dialog"] article img');
-    console.log('alt = ', await getAttr(avatar, 'alt'));
-    await page.waitFor(1000);
-
-    /* закрываем модалку */
-    let closeButton = await page.$('div[role="dialog"]> :nth-child(3)');
-    await closeButton.click();
-    await page.waitFor(1000);
-
 }
 
 const width = 1600;
@@ -128,10 +80,11 @@ async function run() {
         let previousHeight;
 
 
+        let readPosts = new ReadPost(page);
         for (let i = 0; i < scrollCount; i++) {
             previousHeight = await page.evaluate('document.body.scrollHeight');
             try {
-                await readPosts(page);
+                await readPosts.read();
             } catch (e) {
                 console.log(e);
             }
