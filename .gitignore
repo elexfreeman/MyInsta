@@ -61,4 +61,4 @@ typings/
 .next
 
 
-config.sample.ts
+config.ts
