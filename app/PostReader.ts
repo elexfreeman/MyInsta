@@ -1,15 +1,15 @@
 import { UserInstaDB } from "./DB/UserInstaDB";
+import { BasePost } from "./BasePost";
 
-export class ReadPost {
+export class PostReader extends BasePost {
 
     protected iReadThisPosts: string[] = [];
-
-    protected page: any;
+    public scrollCount: number = 1000;
 
     protected userInstaDB: UserInstaDB;
 
     constructor(page: any, userInstaDB: UserInstaDB) {
-        this.page = page;
+        super(page);
         this.userInstaDB = userInstaDB;
     }
 
@@ -32,7 +32,7 @@ export class ReadPost {
 
 
     public async read() {
-        let aPost = await this.page.$$('article> :nth-child(3)>div>div>div a');
+        let aPost = await this.page.$$('article> :nth-child(4)>div>div>div a');
 
         for (let i = 0; i < aPost.length; i++) {
             let href = await this.getAttr(aPost[i], 'href');
@@ -81,6 +81,27 @@ export class ReadPost {
         await closeButton.click();
         await this.page.waitFor(1000);
 
+    }
+
+
+    public async startWorkAt(url: string) {
+        await this.page.goto(url, { waitUntil: 'networkidle2' });
+
+        let scrollDelay = 1000;
+        let previousHeight = 0;
+
+        /* считываем посты */
+        for (let i = 0; i < this.scrollCount; i++) {
+            previousHeight = await this.page.evaluate('document.body.scrollHeight');
+            try {
+                await this.read();
+            } catch (e) {
+                console.log(e);
+            }
+            await this.page.evaluate('window.scrollTo(0, document.body.scrollHeight)');
+            await this.page.waitForFunction(`document.body.scrollHeight > ${previousHeight}`);
+            await this.page.waitFor(scrollDelay);
+        }
     }
 
 }
